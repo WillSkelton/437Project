@@ -1,14 +1,14 @@
 import argparse
+import math
 import os
 from random import randrange
-import Lib
 
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras.preprocessing.text import Tokenizer
+from tensorflow import keras
 from tensorflow.keras import layers
 
-user_responses = []
+userResponses = []
 
 score = [0, 0]
 
@@ -26,6 +26,41 @@ rules = {
     '2': '1',
     '3': '2'
 }
+
+
+debugTest = [
+    [10],
+    [20],
+    [30],
+    [40],
+    [50],
+    [60],
+    [70],
+    [80],
+    [90],
+    [100],
+    [110],
+]
+
+debugData = [
+    [10, 20, 30, 40, 50],
+    [20, 30, 40, 50, 60],
+    [30, 40, 50, 60, 70],
+    [40, 50, 60, 70, 80],
+    [50, 60, 70, 80, 90],
+    [60, 70, 80, 90, 100],
+    [70, 80, 90, 100, 110],
+]
+
+debugLabels = [
+    60,
+    70,
+    80,
+    90,
+    100,
+    110,
+    120,
+]
 
 
 def menu():
@@ -49,13 +84,44 @@ def menu():
         return False
 
 
+def computerChoice():
+    data, labels = splitUserResponses()
+
+    if (len(data) > 0 and len(labels) > 0):
+        model = trainLSTM(debugData, debugLabels)
+
+        prediction = model.predict(debugTest)
+        print(prediction)
+
+    return str(randrange(1, 4))
+
+
 def generate_response():
-    random = str(randrange(1, 4))
+    choice = computerChoice()
 
     # print decoded computer selection
-    print(f"Computer chose {decode[random]}! ", end='')
+    print(f"Computer chose {decode[choice]}! ", end='')
 
-    return random
+    return choice
+
+
+def splitUserResponses():
+    data = []
+    labels = []
+
+    numColumns = 6
+
+    totalLength = math.floor(len(userResponses) / numColumns) * 6
+
+    newData = userResponses[-totalLength:]
+
+    for index, element in enumerate(newData):
+        if ((index + 1) % 6 == 0):
+            labels.append(element)
+        else:
+            data.append(element)
+
+    return [data], labels
 
 
 # cin -> computer input
@@ -85,10 +151,10 @@ def rps():
         (Press Q to quit)
     """
 
-    global user_responses
+    global userResponses
     while uin != "Q":
         print(f"Computer: {score[1]} | User: {score[0]}")
-        print(user_responses)
+        print(userResponses)
         # reset uin
         uin = ""
         # prompt user response
@@ -105,7 +171,7 @@ def rps():
                 # print decoded user selection to console
                 print(f"User chose {decode[uin]}! ", end='')
                 # add user responses to global list
-                user_responses.append(uin)
+                userResponses.append(uin)
                 # get random computer response
                 cin = generate_response()
                 # print outcome to console
@@ -120,17 +186,30 @@ def rps():
     run()
 
 
-def evaluate(model, testData, testLabels):
-    return model.evaluate(testData, testLabels, verbose=1)
+def predict(model, predictionSequence):
+    prediction = model.predict(predictionSequence)
+    print(f"{prediction}")
+    return prediction
 
 
-def RNN(trainData, trainLabels, sequenceSize):
-    model = tf.keras.Sequential()
-    model.add(layers.LSTM(50, activation='relu', input_shape=(sequenceSize, 1)))
-    model.add(layers.Dense(1))
+def trainLSTM(trainData, trainLabels):
+    model = keras.Sequential()
+    # Add an Embedding layer expecting input vocab of size 1000, and
+    # output embedding dimension of size 64.
+    model.add(layers.Embedding(input_dim=1000, output_dim=64))
 
-    model.compile(optimizer=tf.keras.optimizers.Adam(0.01),
-                  loss=tf.keras.losses.MeanSquaredError(), metrics=['accuracy'])
+    # Add a LSTM layer with 128 internal units.
+    model.add(layers.LSTM(128))
+
+    # Add a Dense layer with 10 units.
+    model.add(layers.Dense(10))
+
+    model.compile(
+        optimizer=tf.keras.optimizers.Adam(0.01),
+        loss=tf.keras.losses.MeanSquaredError(),
+        metrics=['accuracy']
+    )
+
     model.fit(trainData, trainLabels, epochs=200, verbose=0)\
 
     return model
