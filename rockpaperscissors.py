@@ -10,6 +10,7 @@ from tensorflow.keras import layers
 
 userResponses = []
 
+chunkSize = 6
 score = [0, 0]
 
 # Rock 1
@@ -28,39 +29,20 @@ rules = {
 }
 
 
-debugTest = [
-    [10],
-    [20],
-    [30],
-    [40],
-    [50],
-    [60],
-    [70],
-    [80],
-    [90],
-    [100],
-    [110],
-]
+def convertSequenceToData(sequence, chunkSize):
+    data = []
+    labels = []
 
-debugData = [
-    [10, 20, 30, 40, 50],
-    [20, 30, 40, 50, 60],
-    [30, 40, 50, 60, 70],
-    [40, 50, 60, 70, 80],
-    [50, 60, 70, 80, 90],
-    [60, 70, 80, 90, 100],
-    [70, 80, 90, 100, 110],
-]
+    if len(sequence) < chunkSize:
+        return data, labels
 
-debugLabels = [
-    60,
-    70,
-    80,
-    90,
-    100,
-    110,
-    120,
-]
+    for index in range(len(sequence) - chunkSize + 1):
+        chunk = sequence[index:index + chunkSize]
+
+        data.append(chunk[:-1])
+        labels.append(chunk[-1])
+
+    return data, labels
 
 
 def menu():
@@ -85,12 +67,12 @@ def menu():
 
 
 def computerChoice():
-    data, labels = splitUserResponses()
+    data, labels = convertSequenceToData(userResponses, chunkSize)
 
     if (len(data) > 0 and len(labels) > 0):
-        model = trainLSTM(debugData, debugLabels)
+        model = trainLSTM(data, labels)
 
-        prediction = model.predict(debugTest)
+        # prediction = model.predict(debugTest)
         print(prediction)
 
     return str(randrange(1, 4))
@@ -103,25 +85,6 @@ def generate_response():
     print(f"Computer chose {decode[choice]}! ", end='')
 
     return choice
-
-
-def splitUserResponses():
-    data = []
-    labels = []
-
-    numColumns = 6
-
-    totalLength = math.floor(len(userResponses) / numColumns) * 6
-
-    newData = userResponses[-totalLength:]
-
-    for index, element in enumerate(newData):
-        if ((index + 1) % 6 == 0):
-            labels.append(element)
-        else:
-            data.append(element)
-
-    return [data], labels
 
 
 # cin -> computer input
