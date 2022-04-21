@@ -71,7 +71,7 @@ def menu():
         return False
 
 
-def computerChoice():
+def generateComputerChoice():
     data, labels = convertSequenceToData(userResponses, chunkSize)
 
     if (len(data) > 0 and len(labels) > 0):
@@ -79,22 +79,18 @@ def computerChoice():
         clearScreen()
 
         prediction = model.predict([userResponses])
-        clearScreen()
+        # clearScreen()
+        prediction = round(sum(prediction[0])/len(prediction[0]))
 
-        prediction = math.floor(sum(prediction[0])/len(prediction[0]))
+        if prediction == 0:
+            prediction = 1
 
-        return f"{prediction}"
+        elif prediction > 3 or prediction < 1:
+            prediction = prediction % 3
+
+        return rules[f"{prediction}"]
 
     return str(randrange(1, 4))
-
-
-def generate_response():
-    choice = computerChoice()
-
-    # print decoded computer selection
-    print(f"Computer chose {decode[choice]}! ", end='')
-
-    return choice
 
 
 # cin -> computer input
@@ -111,51 +107,60 @@ def generate_outcome(cin, uin):
         print('Computer WINS! User LOSES!')
 
 
-# cin -> computer input
-# uin -> user input
-def rps():
-    uin = ""
-    rps_prompt = """
-        Choose:
-        1) Rock
-        2) Paper
-        3) Scissors
+# def printPrompt():
 
-        (Press Q to quit)
+    # cin -> computer input
+    # uin -> user input
+
+
+def rps():
+    userChoice = ""
+    rps_prompt = """
+    Make your choice:
+      1) Rock
+      2) Paper
+      3) Scissors
+
+      (Press Q to quit)
     """
 
     global userResponses
-    while uin != "Q":
+    while userChoice != "Q":
+        print("I am deciding what hand I want to play...")
+
+        computerChoice = generateComputerChoice()
         print(f"Computer: {score[1]} | User: {score[0]}")
         print(userResponses)
+        print()
+
+        print("Alright. I have decided what hand to play.")
+
         # reset uin
-        uin = ""
+        userChoice = ""
         # prompt user response
         print(rps_prompt)
         # continue asking for same round if input is invalid
-        while uin not in decode:
+        while userChoice not in decode:
             print('Enter: ', end='')
             # get input
-            uin = input().strip(' ')
+            userChoice = input().strip(' ')
             # check input
-            if uin in decode:
+            if userChoice in decode:
                 # clear console screen
                 clearScreen()
-                # print decoded user selection to console
-                print(f"User chose {decode[uin]}! ", end='')
                 # add user responses to global list
-                userResponses.append(int(uin))
+                userResponses.append(int(userChoice))
                 # get random computer response
-                cin = generate_response()
+                # print decoded user selection to console
+                print(f"User chose {decode[userChoice]}! ", end='')
+                # print decoded computer selection
+                print(f"Computer chose {decode[computerChoice]}! ", end='')
                 # print outcome to console
-                generate_outcome(cin, uin)
-            elif uin == 'Q':
+                generate_outcome(computerChoice, userChoice)
+            elif userChoice == 'Q':
                 break
             else:
                 print("Try again...")
-    # end of game
-    # loop back to menu
-    # run()
 
 
 def predict(model, predictionSequence):
