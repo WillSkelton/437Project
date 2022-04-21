@@ -23,9 +23,9 @@ decode = {
 }
 
 rules = {
-    '1': '3',
-    '2': '1',
-    '3': '2'
+    '1': '2',
+    '2': '3',
+    '3': '1'
 }
 
 
@@ -78,15 +78,15 @@ def generateComputerChoice():
         model = trainLSTM(data, labels)
         clearScreen()
 
-        prediction = model.predict([userResponses])
+        prediction = model.predict([userResponses[-5:]])
         # clearScreen()
         prediction = round(sum(prediction[0])/len(prediction[0]))
 
-        if prediction == 0:
+        if prediction < 1:
             prediction = 1
 
-        elif prediction > 3 or prediction < 1:
-            prediction = prediction % 3
+        elif prediction > 3:
+            prediction = 3
 
         return rules[f"{prediction}"]
 
