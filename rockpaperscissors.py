@@ -6,7 +6,7 @@ from random import randrange
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
-from tensorflow.keras import layers
+from keras import layers
 
 userResponses = []
 
@@ -27,6 +27,11 @@ rules = {
     '2': '1',
     '3': '2'
 }
+
+
+def clearScreen():
+    # clear console screen
+    os.system('cls')
 
 
 def convertSequenceToData(sequence, chunkSize):
@@ -59,7 +64,7 @@ def menu():
     line = input().strip(' ')
     if line == '1':
         os.system('cls')
-        print('LETS GOOO!!!')
+        print('Here we gooo!!!')
         return True
     else:
         print('Goodbyeee ;)')
@@ -71,9 +76,14 @@ def computerChoice():
 
     if (len(data) > 0 and len(labels) > 0):
         model = trainLSTM(data, labels)
+        clearScreen()
 
-        # prediction = model.predict(debugTest)
-        print(prediction)
+        prediction = model.predict([userResponses])
+        clearScreen()
+
+        prediction = math.floor(sum(prediction[0])/len(prediction[0]))
+
+        return f"{prediction}"
 
     return str(randrange(1, 4))
 
@@ -123,18 +133,18 @@ def rps():
         # prompt user response
         print(rps_prompt)
         # continue asking for same round if input is invalid
-        while uin != "1" and uin != "2" and uin != "3":
+        while uin not in decode:
             print('Enter: ', end='')
             # get input
             uin = input().strip(' ')
             # check input
-            if uin in decode.keys():
+            if uin in decode:
                 # clear console screen
-                os.system('cls')
+                clearScreen()
                 # print decoded user selection to console
                 print(f"User chose {decode[uin]}! ", end='')
                 # add user responses to global list
-                userResponses.append(uin)
+                userResponses.append(int(uin))
                 # get random computer response
                 cin = generate_response()
                 # print outcome to console
@@ -143,10 +153,9 @@ def rps():
                 break
             else:
                 print("Try again...")
-
     # end of game
     # loop back to menu
-    run()
+    # run()
 
 
 def predict(model, predictionSequence):
@@ -173,7 +182,7 @@ def trainLSTM(trainData, trainLabels):
         metrics=['accuracy']
     )
 
-    model.fit(trainData, trainLabels, epochs=200, verbose=0)\
+    model.fit(trainData, trainLabels, epochs=200, verbose=0)
 
     return model
 
