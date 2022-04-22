@@ -8,11 +8,11 @@ def mySplitSequence(sequence, numSteps):
     data = []
     labels = []
 
-    if len(sequence) < numSteps:
-        return data, labels
+    if len(sequence) <= numSteps:
+        return np.array(data), np.array(labels)
 
-    for index in range(len(sequence) - numSteps + 1):
-        chunk = sequence[index:index + numSteps]
+    for index in range(len(sequence) - (numSteps + 1)):
+        chunk = sequence[index:index + numSteps + 1]
 
         data.append(chunk[:-1])
         labels.append(chunk[-1])
@@ -82,10 +82,23 @@ def main():
         160, 170, 180, 190, 200
     ]
 
-    trainData, trainLabels = splitSequence(userData, numSteps)
+    userData = [
+        10, 20, 30, 40, 50,
+        60, 70, 80, 90, 100,
+        # 110, 120, 130, 140, 150,
+        # 160, 170, 180, 190, 200
+    ]
+
+    # trainData, trainLabels = splitSequence(userData, numSteps)
+    trainData, trainLabels = mySplitSequence(userData, numSteps)
+    print(trainData)
+
+    if len(trainData) == 0:
+        return
+
     trainData = trainData.reshape((trainData.shape[0], trainData.shape[1], numFeatures))
 
-    print(trainData[:2])
+    # print(trainData[:2])
 
     model = trainModel(trainData, trainLabels, numSteps, numFeatures)
 
