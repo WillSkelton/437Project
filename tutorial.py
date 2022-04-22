@@ -48,39 +48,7 @@ def splitSequence(sequence, numSteps):
     return data, labels
 
 
-def main():
-    numSteps = 5
-    numFeatures = 1
-
-    userData = [
-        10, 20, 30, 40, 50,
-        60, 70, 80, 90, 100,
-        110, 120, 130, 140, 150,
-        160, 170, 180, 190, 200
-    ]
-
-    trainData, trainLabels = splitSequence(userData, numSteps)
-    trainData = trainData.reshape((trainData.shape[0], trainData.shape[1], numFeatures))
-
-    print(trainData[:2])
-
-    # model = tf.keras.Sequential()
-    # model.add(layers.LSTM(
-    #     50,
-    #     activation='relu',
-    #     input_shape=(numSteps, numFeatures))
-    # )
-
-    # model.add(layers.Dense(1))
-
-    # model.compile(
-    #     optimizer=tf.keras.optimizers.Adam(0.01),
-    #     loss=tf.keras.losses.MeanSquaredError(),
-    #     metrics=['accuracy']
-    # )
-
-    # model.fit(trainData, trainLabels, epochs=200, verbose=0)
-
+def trainModel(data, labels, numSteps, numFeatures):
     model = tf.keras.Sequential()
     model.add(layers.LSTM(
         50,
@@ -98,13 +66,34 @@ def main():
         metrics=['accuracy']
     )
 
-    model.fit(trainData, trainLabels, epochs=200, verbose=1)
+    model.fit(data, labels, epochs=200, verbose=0)
+
+    return model
+
+
+def main():
+    numSteps = 5
+    numFeatures = 1
+
+    userData = [
+        10, 20, 30, 40, 50,
+        60, 70, 80, 90, 100,
+        110, 120, 130, 140, 150,
+        160, 170, 180, 190, 200
+    ]
+
+    trainData, trainLabels = splitSequence(userData, numSteps)
+    trainData = trainData.reshape((trainData.shape[0], trainData.shape[1], numFeatures))
+
+    print(trainData[:2])
+
+    model = trainModel(trainData, trainLabels, numSteps, numFeatures)
 
     test_data = np.array([90, 100, 110, 120, 130])
     test_data = test_data.reshape((1, numSteps, numFeatures))
 
-    predictNextNumber = model.predict(test_data, verbose=1)
-    print(predictNextNumber)
+    predictNextNumber = model.predict(test_data, verbose=0)[0][0]
+    print(round(predictNextNumber))
 
 
 main()
