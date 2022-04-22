@@ -2,6 +2,7 @@ import argparse
 import math
 import os
 from random import randrange
+from tabnanny import verbose
 
 import numpy as np
 import tensorflow as tf
@@ -10,7 +11,8 @@ from keras import layers
 
 userResponses = []
 
-chunkSize = 6
+chunkSize = 5
+numFeatures = 1
 score = [0, 0]
 
 # Rock 1
@@ -34,7 +36,7 @@ def clearScreen():
     os.system('cls')
 
 
-def convertSequenceToData(sequence, chunkSize):
+def splitSequence(sequence, chunkSize):
     data = []
     labels = []
 
@@ -47,7 +49,7 @@ def convertSequenceToData(sequence, chunkSize):
         data.append(chunk[:-1])
         labels.append(chunk[-1])
 
-    return data, labels
+    return np.array(data), np.array(labels)
 
 
 def menu():
@@ -72,15 +74,20 @@ def menu():
 
 
 def generateComputerChoice():
-    data, labels = convertSequenceToData(userResponses, chunkSize)
+    data, labels = splitSequence(userResponses, chunkSize)
 
     if (len(data) > 0 and len(labels) > 0):
-        model = trainLSTM(data, labels)
+        data = data.reshape((data.shape[0], data.shape[1], numFeatures))
+
+        model = mediumLSTM(data, labels)
         clearScreen()
 
-        prediction = model.predict([userResponses[-5:]])
+        testData = np.array(userResponses[-chunkSize:])
+        testData = testData.reshape((1, chunkSize, numFeatures))
+
+        prediction = model.predict(testData, verbose=0)
         # clearScreen()
-        prediction = round(sum(prediction[0])/len(prediction[0]))
+        # prediction = round(sum(prediction[0])/len(prediction[0]))
 
         if prediction < 1:
             prediction = 1
@@ -163,12 +170,6 @@ def rps():
                 print("Try again...")
 
 
-def predict(model, predictionSequence):
-    prediction = model.predict(predictionSequence)
-    print(f"{prediction}")
-    return prediction
-
-
 def trainLSTM(trainData, trainLabels):
     model = keras.Sequential()
     # Add an Embedding layer expecting input vocab of size 1000, and
@@ -190,6 +191,25 @@ def trainLSTM(trainData, trainLabels):
     model.fit(trainData, trainLabels, epochs=200, verbose=0)
 
     return model
+
+
+def mediumLSTM(trainData, trainLabels):
+    model = tf.keras.Sequential()
+    model.add(layers.LSTM(
+        50,
+        activation='relu',
+        input_shape=(chunkSize, numFeatures))
+    )
+
+    model.add(layers.Dense(1))
+
+    model.compile(
+        optimizer=tf.keras.optimizers.Adam(0.01),
+        loss=tf.keras.losses.MeanSquaredError(),
+        metrics=['accuracy']
+    )
+
+    model.fit(trainData, trainLabels, epochs=200, verbose=1)
 
 
 def run():
