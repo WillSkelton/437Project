@@ -11,7 +11,7 @@ from keras import layers
 
 userResponses = []
 
-chunkSize = 5
+# numSteps = 10
 numFeatures = 1
 score = [0, 0]
 
@@ -24,7 +24,13 @@ decode = {
     '3': 'Scissors'
 }
 
-rules = {
+winToLose = {
+    '1': '3',
+    '2': '1',
+    '3': '2'
+}
+
+loseToWin = {
     '1': '2',
     '2': '3',
     '3': '1'
@@ -36,15 +42,15 @@ def clearScreen():
     os.system('cls')
 
 
-def splitSequence(sequence, chunkSize):
+def splitSequence(sequence, numSteps):
     data = []
     labels = []
 
-    if len(sequence) < chunkSize:
-        return data, labels
+    if len(sequence) <= numSteps:
+        return np.array(data), np.array(labels)
 
-    for index in range(len(sequence) - chunkSize + 1):
-        chunk = sequence[index:index + chunkSize]
+    for index in range(len(sequence) - (numSteps + 1)):
+        chunk = sequence[index:index + numSteps + 1]
 
         data.append(chunk[:-1])
         labels.append(chunk[-1])
@@ -74,20 +80,27 @@ def menu():
 
 
 def generateComputerChoice():
-    data, labels = splitSequence(userResponses, chunkSize)
+    numSteps = len(userResponses) - 1
+    if(numSteps < 0):
+        numSteps = 0
+    elif(numSteps > 7):
+        numSteps = 7
+
+    data, labels = splitSequence(userResponses, numSteps)
 
     if (len(data) > 0 and len(labels) > 0):
         data = data.reshape((data.shape[0], data.shape[1], numFeatures))
 
-        model = mediumLSTM(data, labels)
+        model = trainModel(data, labels, numSteps, numFeatures)
         clearScreen()
 
-        testData = np.array(userResponses[-chunkSize:])
-        testData = testData.reshape((1, chunkSize, numFeatures))
+        testData = np.array(userResponses[-numSteps:])
+        testData = testData.reshape((1, numSteps, numFeatures))
 
-        prediction = model.predict(testData, verbose=0)
-        # clearScreen()
-        # prediction = round(sum(prediction[0])/len(prediction[0]))
+        prediction = model.predict(testData, verbose=0)[0][0]
+        clearScreen()
+        print(f"prediction: {prediction}")
+        prediction = round(prediction)
 
         if prediction < 1:
             prediction = 1
@@ -95,29 +108,20 @@ def generateComputerChoice():
         elif prediction > 3:
             prediction = 3
 
-        return rules[f"{prediction}"]
+        return loseToWin[f"{prediction}"]
 
     return str(randrange(1, 4))
 
 
-# cin -> computer input
-# uin -> user input
-# rules -> global dictionary
-def generate_outcome(cin, uin):
-    if rules[uin] == cin:
+def generate_outcome(computerChoice, userChoice):
+    if winToLose[userChoice] == computerChoice:
         score[0] += 1
         print('User WINS! Computer LOSES!')
-    elif uin == cin:
+    elif userChoice == computerChoice:
         print('TIE!!!')
     else:
         score[1] += 1
         print('Computer WINS! User LOSES!')
-
-
-# def printPrompt():
-
-    # cin -> computer input
-    # uin -> user input
 
 
 def rps():
@@ -170,36 +174,13 @@ def rps():
                 print("Try again...")
 
 
-def trainLSTM(trainData, trainLabels):
-    model = keras.Sequential()
-    # Add an Embedding layer expecting input vocab of size 1000, and
-    # output embedding dimension of size 64.
-    model.add(layers.Embedding(input_dim=1000, output_dim=64))
-
-    # Add a LSTM layer with 128 internal units.
-    model.add(layers.LSTM(128))
-
-    # Add a Dense layer with 10 units.
-    model.add(layers.Dense(10))
-
-    model.compile(
-        optimizer=tf.keras.optimizers.Adam(0.01),
-        loss=tf.keras.losses.MeanSquaredError(),
-        metrics=['accuracy']
-    )
-
-    model.fit(trainData, trainLabels, epochs=200, verbose=0)
-
-    return model
-
-
-def mediumLSTM(trainData, trainLabels):
+def trainModel(data, labels, numSteps, numFeatures):
     model = tf.keras.Sequential()
     model.add(layers.LSTM(
         50,
         activation='relu',
-        input_shape=(chunkSize, numFeatures))
-    )
+        input_shape=(numSteps, numFeatures)
+    ))
 
     model.add(layers.Dense(1))
 
@@ -209,7 +190,9 @@ def mediumLSTM(trainData, trainLabels):
         metrics=['accuracy']
     )
 
-    model.fit(trainData, trainLabels, epochs=200, verbose=1)
+    model.fit(data, labels, epochs=200, verbose=0)
+
+    return model
 
 
 def run():
