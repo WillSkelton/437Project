@@ -1,5 +1,14 @@
 ## To Do:
 
+### Instructions To Run App
+
+To run this program:
+
+1. Make sure you are in the directory that contains requirements.txt
+2. Run ```pip install -r requirements.txt```
+3. You should now be able to run ```rockpaperscissors.py```
+
+
 ### Base Game
 
 - [ ] Create Basic Game That Randomly Guesses Each Time
