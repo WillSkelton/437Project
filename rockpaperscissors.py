@@ -13,7 +13,7 @@ userResponses = []
 
 # numSteps = 10
 numFeatures = 1
-score = [0, 0]
+score = [0, 0, 0]
 
 # Rock 1
 # Paper 2
@@ -118,6 +118,7 @@ def generate_outcome(computerChoice, userChoice):
         score[0] += 1
         print('User WINS! Computer LOSES!')
     elif userChoice == computerChoice:
+        score[2] += 1
         print('TIE!!!')
     else:
         score[1] += 1
@@ -140,7 +141,7 @@ def rps():
         print("I am deciding what hand I want to play...")
 
         computerChoice = generateComputerChoice()
-        print(f"Computer: {score[1]} | User: {score[0]}")
+        print(f"Computer: {score[1]} | User: {score[0]} | Tie: {score[2]}")
         print(userResponses)
         print()
 
